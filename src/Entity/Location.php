@@ -1,8 +1,10 @@
 <?php
-
+// src/Entity/Location.php
 namespace App\Entity;
 
 use App\Repository\LocationRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -25,6 +27,14 @@ class Location
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 7)]
     private ?string $longitude = null;
+
+    #[ORM\OneToMany(mappedBy: 'location', targetEntity: Measurement::class)]
+    private Collection $measurements;
+
+    public function __construct()
+    {
+        $this->measurements = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -78,4 +88,35 @@ class Location
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, Measurement>
+     */
+    public function getMeasurements(): Collection
+    {
+        return $this->measurements;
+    }
+
+    public function addMeasurement(Measurement $measurement): static
+    {
+        if (!$this->measurements->contains($measurement)) {
+            $this->measurements->add($measurement);
+            $measurement->setLocation($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMeasurement(Measurement $measurement): static
+    {
+        if ($this->measurements->removeElement($measurement)) {
+            // set the owning side to null (unless already changed)
+            if ($measurement->getLocation() === $this) {
+                $measurement->setLocation(null);
+            }
+        }
+
+        return $this;
+    }
+    
 }
